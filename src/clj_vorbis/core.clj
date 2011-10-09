@@ -287,20 +287,18 @@
                     ;; incorporate sample index here again?
                     ;; if the given buffer is small enough then
                     ;; it will be needed...
-                    val (int (* 32767 (aget pcm-info
-                                            ;; (+ sample-index)
-                                            (+ s (aget pcm-index c)))))
-                    val (int (if (> val 32767)
-                               32767
-                               val))
-                    val (int (if (< val -32768)
-                               -32768
-                               val))
-                    val (short (if (< val 0)
-                                 (bit-or val 32768)
-                                 val))
+                    lval (long (* 32767 (aget pcm-info
+                                              ;; (+ sample-index)
+                                              (+ s (aget pcm-index c)))))
+                    sval (short (if (> lval 32767)
+                                  32767
+                                  (if (< lval -32768)
+                                    -32768
+                                    (if (< lval 0)
+                                      (bit-or lval 32768)
+                                      lval))))
                     idx (int (+ (* 2 c) (* 2 (* s channels))))]
-                (.putShort buf idx val))))
+                (.putShort buf idx sval))))
           (.synthesis_read dsp range)
           (.set-samples! ds (- samples range))
           (.set-sample-index! ds (+ sample-index range))
