@@ -4,56 +4,56 @@
            [java.io InputStream]
            [java.nio ByteBuffer]))
 
+;; Interface to force primitive args in the deftype implementation.
+;; Is there an idiomatic way to do this?
+(definterface IDecoderState
+  (^bytes set_buffer_BANG_ [^bytes buffer])
+  (^bytes get_buffer [])
+  (^long set_samples_BANG_ [^long samples])
+  (^long get_samples [])
+  (^long set_sample_index_BANG_ [^long idx])
+  (^long get_sample_index [])
+  (^ints set_pcm_index_BANG_ [^ints idxArr])
+  (^ints get_pcm_index []))
+
+(deftype DecoderState
+    [^:unsynchronized-mutable ^long samples
+     ^:unsynchronized-mutable ^long sample-index
+     ;; The non primitive type hints don't actually work
+     ;; but at least they serve as documentation...
+     ^:unsynchronized-mutable ^bytes buffer
+     ^:unsynchronized-mutable ^ints pcm-index
+     ^"[[[F" pcm-info
+     ^Packet packet
+     ^Page page
+     ^StreamState stream-state
+     ^SyncState sync-state
+     ^DspState dsp-state
+     ^Block block
+     ^Comment comment
+     ^Info info
+     ^InputStream is]
+  IDecoderState
+  (set-buffer! [this b]
+    (set! buffer b))
+  (get-buffer [this]
+    buffer)
+  (set-samples! [this s]
+    (set! samples s))
+  (get-samples [this]
+    samples)
+  (set-sample-index! [this idx]
+    (set! sample-index idx))
+  (get-sample-index [this]
+    sample-index)
+  (set-pcm-index! [this idx]
+    (set! pcm-index idx))
+  (get-pcm-index [this]
+    pcm-index))
+
 (binding [*unchecked-math* true]
 
   (def ^:const ^:private ^long buffer-size 8192)
-
-  ;; Interface to force primitive args in the deftype implementation.
-  ;; Is there an idiomatic way to do this?
-  (definterface IDecoderState
-    (^bytes set_buffer_BANG_ [^bytes buffer])
-    (^bytes get_buffer [])
-    (^long set_samples_BANG_ [^long samples])
-    (^long get_samples [])
-    (^long set_sample_index_BANG_ [^long idx])
-    (^long get_sample_index [])
-    (^ints set_pcm_index_BANG_ [^ints idxArr])
-    (^ints get_pcm_index []))
-
-  (deftype DecoderState
-      [^:unsynchronized-mutable ^long samples
-       ^:unsynchronized-mutable ^long sample-index
-       ;; The non primitive type hints don't actually work
-       ;; but at least they serve as documentation...
-       ^:unsynchronized-mutable ^bytes buffer
-       ^:unsynchronized-mutable ^ints pcm-index
-       ^"[[[F" pcm-info
-       ^Packet packet
-       ^Page page
-       ^StreamState stream-state
-       ^SyncState sync-state
-       ^DspState dsp-state
-       ^Block block
-       ^Comment comment
-       ^Info info
-       ^InputStream is]
-    IDecoderState
-    (set-buffer! [this b]
-      (set! buffer b))
-    (get-buffer [this]
-      buffer)
-    (set-samples! [this s]
-      (set! samples s))
-    (get-samples [this]
-      samples)
-    (set-sample-index! [this idx]
-      (set! sample-index idx))
-    (get-sample-index [this]
-      sample-index)
-    (set-pcm-index! [this idx]
-      (set! pcm-index idx))
-    (get-pcm-index [this]
-      pcm-index))
 
   (defn- create-state
     "Creates a DecoderState instance and sets default values for it's fields"
