@@ -5,25 +5,25 @@
            [java.nio ByteBuffer]))
 
 (def ^{:private true :tag Integer}
-     buffer-size 8192)
+  buffer-size 8192)
 
 (deftype DecoderState
-  [buffer
-   integers
-   pcmInfo
-   pcmIndex
-   packet
-   page
-   streamState
-   syncState
-   dspState
-   block
-   comment
-   info
-   is
-   ])
+    [buffer
+     integers
+     pcmInfo
+     pcmIndex
+     packet
+     page
+     streamState
+     syncState
+     dspState
+     block
+     comment
+     info
+     is
+     ])
 
-(defn- ^:static create-state ^DecoderState
+(defn- create-state ^DecoderState
   [^InputStream is]
   (let [dsp (DspState.)]
     (DecoderState. (make-array Byte/TYPE 1 0)
@@ -34,43 +34,43 @@
                    (SyncState.) dsp (Block. dsp)
                    (Comment.) (Info.) is)))
 
-(defn- ^:static set-buffer!
+(defn- set-buffer!
   [^DecoderState s ^"[B" b]
   (let [^"[[B" container (.buffer s)]
     (aset container 0 b)))
 
-(defn- ^:static get-buffer ^"[B"
+(defn- get-buffer ^"[B"
   [^DecoderState s]
   (aget ^"[[B" (.buffer s) 0))
 
-(defn- ^:static set-samples!
+(defn- set-samples!
   [^DecoderState ds ^long samples]
   (let [^"[I" integers (.integers ds)]
     (aset-int integers 0 samples)))
 
-(defn- ^:static get-samples ^long
+(defn- get-samples ^long
   [^DecoderState ds]
   (aget ^"[I" (.integers ds) 0))
 
-(defn- ^:static set-sample-index!
+(defn- set-sample-index!
   [^DecoderState ds ^long sample-index]
   (let [^"[I" integers (.integers ds)]
     (aset-int integers 1 sample-index)))
 
-(defn- ^:static get-sample-index ^long
+(defn- get-sample-index ^long
   [^DecoderState ds]
   (aget ^"[I" (.integers ds) 1))
 
-(defn- ^:static set-pcm-index!
+(defn- set-pcm-index!
   [^DecoderState ds ^"[I" array]
   (let [^"[[I" container (.pcmIndex ds)]
     (aset container 0 array)))
 
-(defn- ^:static get-pcm-index
+(defn- get-pcm-index
   [^DecoderState ds]
   (aget ^"[[I" (.pcmIndex ds) 0))
 
-(defn- ^:static read-data ^long
+(defn- read-data ^long
   [^DecoderState ds]
   (let [bs (int buffer-size)
         ^SyncState ss (.syncState ds)
@@ -85,42 +85,42 @@
         (.wrote ss count)
         1))))
 
-(defn- ^:static next-page ^long
+(defn- next-page ^long
   [^DecoderState ds hole-is-error?]
   (let [bs (int buffer-size)
         ^SyncState ss (.syncState ds)
         ^Page page (.page ds)
         ^StreamState stream-state (.streamState ds)]
     (condp = (.pageout ss page)
-        -1 (if hole-is-error?
-             (throw (Exception. "Hole in data"))
-             (if (= -1 (read-data ds))
-               -1
-               (recur ds hole-is-error?)))
-        0 (if (= -1 (read-data ds))
-            -1
-            (recur ds hole-is-error?))
-        1 (do
-            (.pagein stream-state page)
-            1))))
+      -1 (if hole-is-error?
+           (throw (Exception. "Hole in data"))
+           (if (= -1 (read-data ds))
+             -1
+             (recur ds hole-is-error?)))
+      0 (if (= -1 (read-data ds))
+          -1
+          (recur ds hole-is-error?))
+      1 (do
+          (.pagein stream-state page)
+          1))))
 
-(defn- ^:static next-packet ^long
+(defn- next-packet ^long
   [^DecoderState ds hole-is-error?]
   (let [^StreamState stream-state (.streamState ds)
         ^Page page (.page ds)
         ^Packet packet (.packet ds)]
     (condp = (.packetout stream-state packet)
-        -1 (if hole-is-error?
-             (throw (Exception. "Hole in data"))
-             (if (= -1 (next-page ds hole-is-error?))
-               -1
-               (recur ds hole-is-error?)))
-        0 (if (= -1 (next-page ds hole-is-error?))
-            -1
-            (recur ds hole-is-error?))
-        1 1)))
+      -1 (if hole-is-error?
+           (throw (Exception. "Hole in data"))
+           (if (= -1 (next-page ds hole-is-error?))
+             -1
+             (recur ds hole-is-error?)))
+      0 (if (= -1 (next-page ds hole-is-error?))
+          -1
+          (recur ds hole-is-error?))
+      1 1)))
 
-(defn- ^:static read-header ^long
+(defn- read-header ^long
   [^DecoderState s]
   (let [^StreamState stream-state (.streamState s)
         ^Info info (.info s)
@@ -146,7 +146,7 @@
             (throw (Exception. "Not vorbis data"))))))
     1))
 
-(defn- ^:static read-samples ^long
+(defn- read-samples ^long
   [^DecoderState ds]
   (let [^Block block (.block ds)
         ^DspState dsp (.dspState ds)
@@ -174,14 +174,14 @@
 
 (defn init-vorbis
   "Initializes a decoding context for vorbis data and
-  reads the vorbis header from the given stream. If the
-  stream cannot be read, ends prematurely or is not
-  vorbis data, an exception will be thrown.
-  Return value is a decoder object which is used to read
-  pcm data from the stream. Note that the decoder object
-  is full of mutable data and as such is not thread safe.
-  Do not call any vorbis functions from different threads
-  using the same decoder state."
+ reads the vorbis header from the given stream. If the
+ stream cannot be read, ends prematurely or is not
+ vorbis data, an exception will be thrown.
+ Return value is a decoder object which is used to read
+ pcm data from the stream. Note that the decoder object
+ is full of mutable data and as such is not thread safe.
+ Do not call any vorbis functions from different threads
+ using the same decoder state."
   {:tag DecoderState}
   [^InputStream is]
   (let [^DecoderState state (create-state is)
@@ -201,8 +201,8 @@
 
 (defn close-vorbis
   "Cleans up vorbis decoding resources.
-  If close-stream? is true, also closes the associated
-  InputStream object."
+ If close-stream? is true, also closes the associated
+ InputStream object."
   ([^DecoderState ds]
      (close-vorbis ds false))
   ([^DecoderState ds close-stream?]
@@ -231,15 +231,15 @@
   [^DecoderState ds]
   (.rate ^Info (.info ds)))
 
-(defn ^:static read-pcm
+(defn read-pcm
   "Tries to fill the supplied buffer with pcm data.
-  Returns number of bytes written or -1 if
-  end of stream was reached.
-  The limit of the buffer will be set after the last
-  sample written and the position will not be altered
-  which means any relative get operations will work
-  without calling flip on the buffer
-  The byte order of the buffer must be little endian."
+ Returns number of bytes written or -1 if
+ end of stream was reached.
+ The limit of the buffer will be set after the last
+ sample written and the position will not be altered
+ which means any relative get operations will work
+ without calling flip on the buffer
+ The byte order of the buffer must be little endian."
   ^long [^DecoderState ds ^ByteBuffer buf]
   (let [^Info info (.info ds)
         channels (.channels info)
