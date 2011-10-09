@@ -291,13 +291,7 @@
                     lval (long (* 32767 (aget pcm-info
                                               ;; (+ sample-index)
                                               (+ s (aget pcm-index c)))))
-                    sval (short (if (> lval 32767)
-                                  32767
-                                  (if (< lval -32768)
-                                    -32768
-                                    (if (< lval 0)
-                                      (bit-or lval 32768)
-                                      lval))))
+                    sval (short (max -32768 (min 32767 lval)))
                     idx (int (+ (* 2 c) (* 2 (* s channels))))]
                 (.putShort buf idx sval))))
           (.synthesis_read dsp range)
