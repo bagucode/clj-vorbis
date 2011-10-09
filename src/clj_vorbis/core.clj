@@ -209,7 +209,7 @@
   is full of mutable data and as such is not thread safe.
   Do not call any vorbis functions from different threads
   using the same decoder state."
-    ^DecoderState [^InputStream is]
+    [^InputStream is]
     (let [^DecoderState state (create-state is)
           ^SyncState ss (.sync-state state)
           bs buffer-size
@@ -234,10 +234,11 @@
     "Cleans up vorbis decoding resources.
   If close-stream? is true, also closes the associated
   InputStream object."
-    ([^DecoderState ds]
-       (close-vorbis ds false))
-    ([^DecoderState ds close-stream?]
-       (let [^StreamState ss (.stream-state ds)
+    ([decoder-state]
+       (close-vorbis decoder-state false))
+    ([decoder-state close-stream?]
+       (let [^DecoderState ds decoder-state
+             ^StreamState ss (.stream-state ds)
              ^Block block (.block ds)
              ^DspState dsp (.dsp-state ds)
              ^Info info (.info ds)
@@ -254,13 +255,13 @@
 
   (defn channels
     "Returns number of channels in a vorbis stream."
-    ^long [^DecoderState ds]
-    (.channels ^Info (.info ds)))
+    ^long [decoder-state]
+    (.channels ^Info (.info ^DecoderState decoder-state)))
 
   (defn hz
     "Returns the sample frequency of a vorbis stream."
-    ^long [^DecoderState ds]
-    (.rate ^Info (.info ds)))
+    ^long [decoder-state]
+    (.rate ^Info (.info ^DecoderState decoder-state)))
 
   (defn read-pcm
     "Tries to fill the supplied buffer with pcm data.
@@ -272,8 +273,9 @@
   without calling flip on the buffer.
   Samples will be written as 16 bit signed integer
   values in the byte order used by the supplied buffer."
-    ^long [^DecoderState ds ^ByteBuffer buf]
-    (let [channels (channels ds)
+    ^long [decoder-state ^ByteBuffer buf]
+    (let [^DecoderState ds decoder-state
+          channels (channels ds)
           max-samples (unchecked-divide-int (.remaining buf) (* 2 channels))
           ^DspState dsp (.dsp-state ds)]
       (if (== 0 (.get-samples ds))
