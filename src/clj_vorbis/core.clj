@@ -194,6 +194,9 @@
                     (.set-sample-index! ds 0)
                     samples)))))))))
 
+  (defn- clamp ^long [^long val ^long min-val ^long max-val]
+    (min max-val (max min-val val)))
+
   ;; Public
 
   (defn init-vorbis
@@ -291,7 +294,7 @@
                     lval (long (* 32767 (aget pcm-info
                                               ;; (+ sample-index)
                                               (+ s (aget pcm-index c)))))
-                    sval (short (max -32768 (min 32767 lval)))
+                    sval (short (clamp lval -32768 32767))
                     idx (int (+ (* 2 c) (* 2 (* s channels))))]
                 (.putShort buf idx sval))))
           (.synthesis_read dsp range)
