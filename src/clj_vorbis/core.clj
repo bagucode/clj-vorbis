@@ -266,8 +266,9 @@
   The limit of the buffer will be set after the last
   sample written and the position will not be altered
   which means any relative get operations will work
-  without calling flip on the buffer
-  The byte order of the buffer must be little endian."
+  without calling flip on the buffer.
+  Samples will be written as 16 bit signed integer
+  values in the byte order used by the supplied buffer."
     ^long [^DecoderState ds ^ByteBuffer buf]
     (let [channels (channels ds)
           max-samples (unchecked-divide-int (.remaining buf) (* 2 channels))
